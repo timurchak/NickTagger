@@ -195,19 +195,27 @@ local function NickTagger_CreateOptionsPanel()
     local frame = CreateFrame("Frame", "NickTaggerOptionsFrame", UIParent)
     frame.name = "NickTagger"
 
+    local scrollFrame = CreateFrame("ScrollFrame", "NickTaggerOptionsScrollFrame", frame, "UIPanelScrollFrameTemplate")
+    scrollFrame:SetPoint("TOPLEFT", 8, -8)
+    scrollFrame:SetPoint("BOTTOMRIGHT", -28, 8)
+
+    local content = CreateFrame("Frame", nil, scrollFrame)
+    content:SetSize(560, 1400)
+    scrollFrame:SetScrollChild(content)
+
     -- Title
-    local title = frame:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
+    local title = content:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
     title:SetPoint("TOPLEFT", 16, -16)
     title:SetText("NickTagger")
 
     -- Description
-    local subtext = frame:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+    local subtext = content:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
     subtext:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -8)
     subtext:SetWidth(500)
     subtext:SetText("Adds a custom nickname prefix to your chat messages, e.g. [timurchak] Привет, in selected channels.")
 
     -- Enable checkbox
-    local enableCB = CreateFrame("CheckButton", nil, frame, "UICheckButtonTemplate")
+    local enableCB = CreateFrame("CheckButton", nil, content, "UICheckButtonTemplate")
     enableCB:SetPoint("TOPLEFT", subtext, "BOTTOMLEFT", 0, -12)
     enableCB:SetScript("OnClick", function(self)
         NickTaggerDB.enabled = self:GetChecked() and true or false
@@ -216,12 +224,12 @@ local function NickTagger_CreateOptionsPanel()
         self:SetChecked(NickTaggerDB.enabled)
     end)
 
-    local enableLabel = frame:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+    local enableLabel = content:CreateFontString(nil, "ARTWORK", "GameFontNormal")
     enableLabel:SetPoint("LEFT", enableCB, "RIGHT", 4, 1)
     enableLabel:SetText("Enable NickTagger")
 
     -- "Hide greeting" checkbox
-    local hideGreetingCB = CreateFrame("CheckButton", nil, frame, "UICheckButtonTemplate")
+    local hideGreetingCB = CreateFrame("CheckButton", nil, content, "UICheckButtonTemplate")
     hideGreetingCB:SetPoint("TOPLEFT", enableCB, "BOTTOMLEFT", 0, -8)
     hideGreetingCB:SetScript("OnClick", function(self)
         -- If checked => hide greeting => showGreeting = false
@@ -232,17 +240,17 @@ local function NickTagger_CreateOptionsPanel()
         self:SetChecked(NickTaggerDB.showGreeting == false)
     end)
 
-    local hideGreetingLabel = frame:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+    local hideGreetingLabel = content:CreateFontString(nil, "ARTWORK", "GameFontNormal")
     hideGreetingLabel:SetPoint("LEFT", hideGreetingCB, "RIGHT", 4, 1)
     hideGreetingLabel:SetText("Hide greeting message on login")
 
     -- Nickname label
-    local nicknameLabel = frame:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+    local nicknameLabel = content:CreateFontString(nil, "ARTWORK", "GameFontNormal")
     nicknameLabel:SetPoint("TOPLEFT", hideGreetingCB, "BOTTOMLEFT", 0, -20)
     nicknameLabel:SetText("Nickname:")
 
     -- Nickname edit box
-    local nicknameBox = CreateFrame("EditBox", nil, frame, "InputBoxTemplate")
+    local nicknameBox = CreateFrame("EditBox", nil, content, "InputBoxTemplate")
     nicknameBox:SetSize(200, 20)
     nicknameBox:SetAutoFocus(false)
     nicknameBox:SetPoint("LEFT", nicknameLabel, "RIGHT", 8, 0)
@@ -274,13 +282,13 @@ local function NickTagger_CreateOptionsPanel()
     end)
 
     -- Channels header
-    local channelsLabel = frame:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+    local channelsLabel = content:CreateFontString(nil, "ARTWORK", "GameFontNormal")
     channelsLabel:SetPoint("TOPLEFT", nicknameLabel, "BOTTOMLEFT", 0, -24)
     channelsLabel:SetText("Apply prefix in channels:")
 
     -- Helper to create channel checkboxes
     local function CreateChannelCheckbox(anchor, offsetY, labelText, chatTypeKey)
-        local cb = CreateFrame("CheckButton", nil, frame, "UICheckButtonTemplate")
+        local cb = CreateFrame("CheckButton", nil, content, "UICheckButtonTemplate")
         cb:SetPoint("TOPLEFT", anchor, "BOTTOMLEFT", 0, offsetY)
         cb:SetScript("OnClick", function(self)
             NickTaggerDB.enabledChannels[chatTypeKey] = self:GetChecked() and true or false
@@ -289,12 +297,13 @@ local function NickTagger_CreateOptionsPanel()
             self:SetChecked(NickTaggerDB.enabledChannels[chatTypeKey] == true)
         end)
 
-        local lbl = frame:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+        local lbl = content:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
         lbl:SetPoint("LEFT", cb, "RIGHT", 4, 1)
         lbl:SetText(labelText)
 
         return cb
     end
+
     local previousAnchor = channelsLabel
     local previousOffset = -8
     local lastCB = nil
@@ -305,7 +314,7 @@ local function NickTagger_CreateOptionsPanel()
     end
 
     -- Spacer so panel does not end too early
-    local bottomSpacer = frame:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+    local bottomSpacer = content:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
     bottomSpacer:SetPoint("TOPLEFT", lastCB, "BOTTOMLEFT", 0, -24)
     bottomSpacer:SetText("Use /nicktag enable channel for Trade/General/Newcomer and /nicktag enable communities for Communities chat.")
 
@@ -359,6 +368,8 @@ f:SetScript("OnEvent", function()
         Print("Loaded. Type /nicktag for options. Open via Escape -> Options -> AddOns -> NickTagger.")
     end
 end)
+
+
 
 
 
