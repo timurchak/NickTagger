@@ -85,40 +85,46 @@ local function NormalizeChannelName(name)
     return CHANNEL_ALIAS_TO_KEY[name:lower()]
 end
 
--- This will be called instead of original OnEnterPressed of chat edit boxes
-local function NickTagger_OnEnterPressed(editBox)
+local function NickTagger_ApplyPrefix(editBox, userInput)
     if not editBox or editBox:IsForbidden() then
-        if editBox.NickTagger_OrigOnEnterPressed then
-            return editBox.NickTagger_OrigOnEnterPressed(editBox)
-        end
         return
     end
 
     local text = editBox:GetText()
-    if text and text ~= "" then
-        -- Do not touch slash commands
-        if text:sub(1, 1) ~= "/" then
-            local chatType = editBox:GetAttribute("chatType") or "SAY"
-
-            if IsChannelEnabled(chatType) then
-                local nick = NickTaggerDB.nickname
-                if nick and nick ~= "" then
-                    -- Avoid duplicate prefix
-                    local escapedNick = nick:gsub("(%W)", "%%%1")
-                    local pattern = "^%[" .. escapedNick .. "%]"
-                    if not text:match(pattern) then
-                        text = string.format("[%s] %s", nick, text)
-                        editBox:SetText(text)
-                    end
-                end
-            end
-        end
+    if not userInput or not text or text == "" then
+        return
     end
 
-    -- Call original handler
-    if editBox.NickTagger_OrigOnEnterPressed then
-        return editBox.NickTagger_OrigOnEnterPressed(editBox)
+    if editBox.NickTagger_ApplyingPrefix then
+        return
     end
+
+    -- Do not touch slash commands
+    if text:sub(1, 1) == "/" then
+        return
+    end
+
+    local chatType = editBox:GetAttribute("chatType") or "SAY"
+    if not IsChannelEnabled(chatType) then
+        return
+    end
+
+    local nick = NickTaggerDB.nickname
+    if not nick or nick == "" then
+        return
+    end
+
+    -- Avoid duplicate prefix
+    local escapedNick = nick:gsub("(%W)", "%%%1")
+    local pattern = "^%[" .. escapedNick .. "%]"
+    if text:match(pattern) then
+        return
+    end
+
+    editBox.NickTagger_ApplyingPrefix = true
+    editBox:SetText(string.format("[%s] %s", nick, text))
+    editBox:SetCursorPosition(editBox:GetNumLetters())
+    editBox.NickTagger_ApplyingPrefix = false
 end
 
 -- Slash command handler
@@ -344,14 +350,13 @@ f:SetScript("OnEvent", function()
         NickTaggerDB.nickname = UnitName("player")
     end
 
-    -- Hook all chat edit boxes
+    -- Hook all chat edit boxes without replacing protected handlers.
     if NUM_CHAT_WINDOWS then
         for i = 1, NUM_CHAT_WINDOWS do
             local editBox = _G["ChatFrame"..i.."EditBox"]
             if editBox and not editBox.NickTagger_Hooked then
                 editBox.NickTagger_Hooked = true
-                editBox.NickTagger_OrigOnEnterPressed = editBox:GetScript("OnEnterPressed")
-                editBox:SetScript("OnEnterPressed", NickTagger_OnEnterPressed)
+                editBox:HookScript("OnTextChanged", NickTagger_ApplyPrefix)
             end
         end
     end
@@ -368,10 +373,3 @@ f:SetScript("OnEvent", function()
         Print("Loaded. Type /nicktag for options. Open via Escape -> Options -> AddOns -> NickTagger.")
     end
 end)
-
-
-
-
-
-
-
