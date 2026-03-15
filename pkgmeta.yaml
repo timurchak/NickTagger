@@ -1,0 +1,7 @@
+package-as: NickTagger
+
+ignore:
+  - .gitignore
+  - package.ps1
+  - dist
+  - .vscode

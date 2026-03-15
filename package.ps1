@@ -12,8 +12,8 @@ $ErrorActionPreference = 'Stop'
 function Parse-VersionParts {
     param([string]$Value)
 
-    if ($Value -notmatch '^(\d+)\.(\d+)\.(\d+)$') {
-        throw "Version '$Value' must be in semver format: major.minor.patch"
+    if ($Value -notmatch '^(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?$') {
+        throw "Version '$Value' must be in semver format: major.minor.patch or major.minor.patch-suffix"
     }
 
     return [int[]]@([int]$Matches[1], [int]$Matches[2], [int]$Matches[3])
