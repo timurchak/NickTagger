@@ -86,7 +86,7 @@ local function NormalizeChannelName(name)
 end
 
 local function NickTagger_ApplyPrefix(editBox, userInput)
-    if not editBox or editBox:IsForbidden() then
+    if not editBox or editBox:IsForbidden() or InCombatLockdown() then
         return
     end
 
