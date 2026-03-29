@@ -22,6 +22,15 @@ local defaults = {
 
 local NickTaggerOptionsCategory -- reserved for Settings API if needed
 local NickTagger_Initialized = false -- to avoid UI updating before DB is ready
+local NickTagger_InMythicContent = false -- suspend during M+ to avoid SecretValue taint
+
+local MYTHIC_KEYSTONE_DIFFICULTY = 8
+local MYTHIC_RAID_DIFFICULTY = 16
+
+local function IsRestrictedContent()
+    local _, _, difficultyID = GetInstanceInfo()
+    return difficultyID == MYTHIC_KEYSTONE_DIFFICULTY or difficultyID == MYTHIC_RAID_DIFFICULTY
+end
 
 local CHANNEL_OPTIONS = {
     { key = "SAY",                 label = "Say (/s)", aliases = { "say", "s" } },
@@ -86,11 +95,18 @@ local function NormalizeChannelName(name)
 end
 
 local function NickTagger_ApplyPrefix(editBox, userInput)
+    if NickTagger_InMythicContent then
+        return
+    end
+
     if not editBox or editBox:IsForbidden() or InCombatLockdown() then
         return
     end
 
-    local text = editBox:GetText()
+    local ok, text = pcall(editBox.GetText, editBox)
+    if not ok then
+        return
+    end
     if not userInput or not text or text == "" then
         return
     end
@@ -339,7 +355,24 @@ end
 -- Event frame
 local f = CreateFrame("Frame")
 f:RegisterEvent("PLAYER_LOGIN")
-f:SetScript("OnEvent", function()
+f:RegisterEvent("CHALLENGE_MODE_START")
+f:RegisterEvent("CHALLENGE_MODE_COMPLETED")
+f:RegisterEvent("CHALLENGE_MODE_RESET")
+f:RegisterEvent("PLAYER_ENTERING_WORLD")
+f:RegisterEvent("ZONE_CHANGED_NEW_AREA")
+f:SetScript("OnEvent", function(self, event)
+    if event == "CHALLENGE_MODE_START" then
+        NickTagger_InMythicContent = true
+        return
+    end
+    if event == "CHALLENGE_MODE_COMPLETED" or event == "CHALLENGE_MODE_RESET" then
+        NickTagger_InMythicContent = false
+        return
+    end
+    if event == "PLAYER_ENTERING_WORLD" or event == "ZONE_CHANGED_NEW_AREA" then
+        NickTagger_InMythicContent = IsRestrictedContent()
+        return
+    end
     -- Init DB
     if type(NickTaggerDB) ~= "table" then
         NickTaggerDB = {}

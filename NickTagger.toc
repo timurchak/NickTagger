@@ -2,7 +2,7 @@
 ## Title: NickTagger
 ## Notes: Adds custom nickname prefix to your chat messages.
 ## Author: timurchak
-## Version: 1.0.6
+## Version: 1.0.7
 ## SavedVariables: NickTaggerDB
 
 NickTagger.lua
